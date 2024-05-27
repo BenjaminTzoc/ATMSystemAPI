@@ -22,6 +22,8 @@ model Cliente {
   fecha_creacion  DateTime              @default(now())
   accesos         AccesoBancaVirtual[]  // Relación uno a muchos con AccesoBancaVirtual
   cuentas         Cuenta[]              // Relación uno a muchos con Cuenta
+  user            Usuario               @relation(fields: [userId], references: [usuario_id])
+  userId          Int                   @unique
 }
 
 model AccesoBancaVirtual {
@@ -43,6 +45,7 @@ model Cuenta {
   limite_credito          Float?
   fecha_apertura          DateTime
   fecha_cierre            DateTime?
+  tarjetas                Tarjeta[]
   cliente                 Cliente        @relation(fields: [cliente_id], references: [cliente_id])
   tipo_cuenta             TipoCuenta     @relation(fields: [tipo_cuenta_id], references: [tipo_cuenta_id])
   pagos                   PagoServicio[] // Relación uno a muchos con PagoServicio
@@ -102,6 +105,7 @@ model Usuario {
   transferencias             Transferencia[] // Relación uno a muchos con Transferencia
   rol                        RolUsuario @relation(fields: [rol_id], references: [rol_id])
   auditorias                 Auditoria[]   // Relación uno a muchos con Auditoria
+  cliente                    Cliente?
 }
 
 model RolUsuario {
@@ -121,4 +125,13 @@ model Auditoria {
   detalles           String
   descripcion        String
   usuario            Usuario  @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+model Tarjeta {
+  tarjeta_id      Int       @id @default(autoincrement())
+  cuenta_id      Int
+  numero_tarjeta  String    @unique
+  tipo_tarjeta    String
+  fecha_expiracion DateTime
+  cuenta          Cuenta    @relation(fields: [cuenta_id], references: [cuenta_id])
 }

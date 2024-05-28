@@ -7,28 +7,27 @@ const router = express.Router();
 
 //HANDLER PARA AGREGAR UN NUEVO USUARIO - PRIMER PASO REGISTRAR USUARIO
 router.post('/add_user', async (req, res) => {
-    const { nombreUsuario, contrasena, rolId, correoElectronico, identificacion } = req.body;
+    const { user_name, password, role_id, email, identification } = req.body;
 
     try{
-        const hashedPassword = await bcrypt.hash(contrasena, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         //BUSCA COINCIDENCIAS ENTRE IDENTIFICACION DE CLIENTE
-        const existingCustomer = await prisma.cliente.findUnique({
-            where: { identificacion: identificacion },
-            include: { cuentas: true }
+        const existingCustomer = await prisma.customer.findUnique({
+            where: { identification: identification },
+            include: { accounts: true }
         });
 
         //SI EXISTE UN CLIENTE CON LA MISMA IDENTIFICACION
         if(existingCustomer){
-            const newUser = await prisma.usuario.create({
+            const newUser = await prisma.user.create({
                 data: {
-                    nombreUsuario,
-                    contrasena: hashedPassword,
-                    rolId,
-                    correoElectronico,
-                    telefono,
-                    fechaUltimoInicioSesion: new Date(),
-                    cliente: {
-                        connect: { id: existingCustomer.id }
+                    user_name,
+                    password: hashedPassword,
+                    role_id,
+                    email,
+                    last_login: new Date(),
+                    customer: {
+                        connect: { customer_id: existingCustomer.customer_id }
                     }
                 }
             });
@@ -51,43 +50,47 @@ router.post('/add_user', async (req, res) => {
                 }
             });
         }
-    }catch(ex){
+    }catch(error){
         res.status(500).json({
             statusCode: 500,
-            error: ex.message 
+            message: 'Error del servidor',
+            data:{
+              error: error.message
+            }
         });
     }
 });
 
 //HANDLER PARA INSERTAR UN NUEVO USUARIO Y NUEVO CLIENTE A SU VEZ
 router.post('/add_user/new_customer', async (req, res) => {
-    const {nombreUsuario, contrasena, rolId, correoElectronico, identificacion, fechaUltimoInicioSesion,
-            nombre, direccion, telefono, fecha_nacimiento, estado_civil, genero, nacionalidad } = req.body;
+    const {user_name, password, role_id, email, identification,
+            name, address, telephone, birthdate, civil_status, gender, nationality } = req.body;
 
     try {
-        const newCustomer = await prisma.cliente.create({
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newCustomer = await prisma.customer.create({
             data: {
-                nombre,
-                direccion,
-                telefono,
-                email: correoElectronico,
-                identificacion,
-                fecha_nacimiento: new Date(fecha_nacimiento),
-                estado_civil,
-                genero,
-                nacionalidad
+                name,
+                address,
+                telephone,
+                email,
+                identification,
+                birthdate: new Date(birthdate),
+                civil_status,
+                gender,
+                nationality
             }
         });
 
-        const newUser = await prisma.usuario.create({
+        const newUser = await prisma.user.create({
             data: {
-                nombreUsuario,
-                contrasena,
-                rolId,
-                correoElectronico,
-                fechaUltimoInicioSesion: new Date(now()),
-                cliente: {
-                    connect: { id: newCustomer.id }
+                user_name,
+                password: hashedPassword,
+                role_id,
+                email,
+                last_login: new Date(),
+                customer: {
+                    connect: { customer_id: newCustomer.customer_id }
                 }
             }
         });
@@ -100,31 +103,33 @@ router.post('/add_user/new_customer', async (req, res) => {
                 customer: newCustomer
             }
         });
-    } catch (ex) {
+    } catch (error) {
         res.status(500).json({
             statusCode: 500,
-            error: ex.message
+            message: 'Error del servidor',
+            data:{
+              error: error.message
+            }
         });
-        
     }
 });
 
 //HANDLER PARA INSERTAR SOLAMENTE UN CLIENTE NUEVO
 router.post('/new_customer', async (req, res) => {
-    const {nombre, direccion, telefono, email, identificacion, fecha_nacimiento, estado_civil, genero, nacionalidad } = req.body;
+    const {name, address, telephone, email, identification, birthdate, civil_status, gender, nationality } = req.body;
 
     try {
-        const newCustomer = await prisma.cliente.create({
+        const newCustomer = await prisma.customer.create({
             data: {
-                nombre,
-                direccion,
-                telefono,
+                name,
+                address,
+                telephone,
                 email,
-                identificacion,
-                fecha_nacimiento: new Date(fecha_nacimiento),
-                estado_civil,
-                genero,
-                nacionalidad
+                identification,
+                birthdate: new Date(birthdate),
+                civil_status,
+                gender,
+                nationality
             }
         });
     
@@ -135,10 +140,13 @@ router.post('/new_customer', async (req, res) => {
                 customer: newCustomer
             }
         });
-    } catch (ex) {
+    } catch (error) {
         res.status(500).json({
             statusCode: 500,
-            message: ex.message
+            message: 'Error del servidor',
+            data:{
+              error: error.message
+            }
         });
     }
 });

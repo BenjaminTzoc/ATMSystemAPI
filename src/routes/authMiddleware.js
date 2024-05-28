@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 class AuthMiddleware {
-  static verificarToken(req, res, next) {
+  static tokenVerification(req, res, next) {
     const token = req.headers.authorization;
 
     if (!token) {

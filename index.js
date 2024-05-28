@@ -24,7 +24,7 @@ app.get('/ping', async (req, res) => {
         res.json(roles);
       } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Error fetching roles' });
+        res.status(500).json({ error: error });
       }
 });
 

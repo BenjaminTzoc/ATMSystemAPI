@@ -15,7 +15,7 @@ const Port2 = process.env.PG_PORT;
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send(Database)
+    res.send('Hello World: ' + Database.toString())
 });
 
 app.get('/ping', async (req, res) => {

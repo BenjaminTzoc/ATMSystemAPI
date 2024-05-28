@@ -8,14 +8,14 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
-const Database = process.env.PG_DATABASE;
+const Database = process.env.JWT_SECRET;
 const Host = process.env.PG_HOST;
 const Port2 = process.env.PG_PORT;
 
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send('Hello World: ' + Database.toString())
+    res.send('Hello World: ' + Database)
 });
 
 app.get('/ping', async (req, res) => {

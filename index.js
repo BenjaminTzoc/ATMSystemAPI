@@ -8,7 +8,7 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
-const Database = process.env.JWT_SECRET;
+const Database = process.env.DATABASE_URL;
 const Host = process.env.PG_HOST;
 const Port2 = process.env.PG_PORT;
 

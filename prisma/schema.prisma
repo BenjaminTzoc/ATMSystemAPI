@@ -7,131 +7,131 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Cliente {
-  cliente_id      Int                   @id @default(autoincrement())
-  nombre          String
-  apellido        String
-  direccion       String
-  telefono        String
-  email           String                @unique
-  identificacion  String                @unique
-  fecha_nacimiento DateTime
-  estado_civil    String
-  genero          String
-  nacionalidad    String
-  fecha_creacion  DateTime              @default(now())
-  accesos         AccesoBancaVirtual[]  // Relación uno a muchos con AccesoBancaVirtual
-  cuentas         Cuenta[]              // Relación uno a muchos con Cuenta
-  user            Usuario               @relation(fields: [userId], references: [usuario_id])
-  userId          Int                   @unique
+model RolUsuario {
+  id                Int       @id @default(autoincrement())
+  descripcion       String    @unique
+  usuarios          Usuario[]
 }
 
-model AccesoBancaVirtual {
-  acceso_id      Int      @id @default(autoincrement())
-  cliente_id     Int
-  fecha_acceso   DateTime
-  tipo_acceso    String
-  exitoso        Boolean
-  cliente        Cliente  @relation(fields: [cliente_id], references: [cliente_id])
+model Usuario {
+  usuarioId                 Int           @id @default(autoincrement())
+  nombreUsuario             String        @unique
+  contrasena                String
+  rolId                     Int
+  rol                       RolUsuario?   @relation(fields: [rolId], references: [id])
+  correoElectronico         String        @unique
+  fechaUltimoInicioSesion   DateTime?
+  estadoUsuario             String        @default("A")
+  fechaCreacion             DateTime      @default(now())
+  cliente                   Cliente?
+  transferencias            Transferencia[]
+  auditorias                Auditoria[]
+}
+
+model Cliente {
+  id                    Int         @id @default(autoincrement())
+  nombre                String
+  direccion             String
+  telefono              String
+  email                 String      @unique
+  identificacion        String      @unique
+  fecha_nacimiento      DateTime
+  estado_civil          String
+  genero                String
+  nacionalidad          String
+  fecha_creacion        DateTime    @default(now())
+  accesosBancaVirtual   AccesoBancaVirtual[]
+  cuentas               Cuenta[]
+  usuario               Usuario?    @relation(fields: [usuarioId], references: [usuarioId])
+  usuarioId             Int         @unique
+}
+
+model TipoCuenta {
+  id            Int       @id @default(autoincrement())
+  descripcion   String
+  cuentas       Cuenta[]
 }
 
 model Cuenta {
-  cuenta_id               Int            @id @default(autoincrement())
-  cliente_id              Int
-  numero_cuenta           String         @unique
+  cuenta_id                      Int           @id @default(autoincrement())
+  clienteId               Int           @unique
+  cliente                 Cliente       @relation(fields: [clienteId], references: [id])
+  numeroCuenta            String        @unique
   saldo                   Float
-  tipo_cuenta_id          Int
-  estado_cuenta           String
-  limite_credito          Float?
-  fecha_apertura          DateTime
-  fecha_cierre            DateTime?
+  tipoCuentaId            Int
+  tipoCuenta              TipoCuenta    @relation(fields: [tipoCuentaId], references: [id])
+  estadoCuenta            String
+  limiteCredito           Float
+  fechaApertura           DateTime
+  fechaCierre             DateTime?
   tarjetas                Tarjeta[]
-  cliente                 Cliente        @relation(fields: [cliente_id], references: [cliente_id])
-  tipo_cuenta             TipoCuenta     @relation(fields: [tipo_cuenta_id], references: [tipo_cuenta_id])
-  pagos                   PagoServicio[] // Relación uno a muchos con PagoServicio
+  pagosServicios          PagoServicio[]
   transferencias_origen   Transferencia[] @relation("TransferenciaCuentaOrigen")
   transferencias_destino  Transferencia[] @relation("TransferenciaCuentaDestino")
 }
 
-model TipoCuenta {
-  tipo_cuenta_id Int        @id @default(autoincrement())
-  descripcion    String
-  cuentas        Cuenta[]   // Relación uno a muchos con Cuenta
+model Tarjeta {
+  id                          Int       @id @default(autoincrement())
+  cuentaId                    Int       @unique
+  cuenta                      Cuenta    @relation(fields: [cuentaId], references: [cuenta_id])
+  numeroTarjetaEncriptada     String    @unique
+  tipoTarjeta                 String
+  fechaVencimiento            DateTime
+  estadoTarjeta               String
+  pinTarjeta                  String
 }
 
 model TipoServicio {
-  tipo_servicio_id Int          @id @default(autoincrement())
-  descripcion      String
-  pagos            PagoServicio[] // Relación uno a muchos con PagoServicio
+  id      Int         @id @default(autoincrement())
+  descripcion         String
+  pagosServicios      PagoServicio[]
 }
 
 model PagoServicio {
-  pago_id          Int          @id @default(autoincrement())
-  cuenta_id        Int
-  tipo_servicio_id Int
-  monto            Float
-  referencia       String
-  estatus          String
-  fecha_pago       DateTime
-  cuenta           Cuenta       @relation(fields: [cuenta_id], references: [cuenta_id])
-  tipo_servicio    TipoServicio @relation(fields: [tipo_servicio_id], references: [tipo_servicio_id])
+  id                Int             @id @default(autoincrement())
+  cuentaId          Int             @unique
+  cuenta            Cuenta          @relation(fields: [cuentaId], references: [cuenta_id])
+  tipoServicioId    Int
+  tipoServicio      TipoServicio    @relation(fields: [tipoServicioId], references: [id])
+  monto             Float
+  referencia        String?
+  estatus           String          @default("PENDIENTE")
+  fechaPago         DateTime
 }
 
 model Transferencia {
-  transferencia_id       Int       @id @default(autoincrement())
-  cuenta_origen_id       Int
-  cuenta_destino_id      Int
-  monto                  Float
-  estado_transferencia   String
-  fecha_transferencia    DateTime
-  fecha_autorizacion     DateTime
-  usuario_autorizacion   Int
-  usuario                Usuario  @relation(fields: [usuario_autorizacion], references: [usuario_id])
-  descripcion            String
-  cuenta_origen          Cuenta    @relation("TransferenciaCuentaOrigen", fields: [cuenta_origen_id], references: [cuenta_id])
-  cuenta_destino         Cuenta    @relation("TransferenciaCuentaDestino", fields: [cuenta_destino_id], references: [cuenta_id])
+  id                      Int       @id @default(autoincrement())
+  cuenta_origen_id          Int       
+  cuentaOrigen            Cuenta    @relation("TransferenciaCuentaOrigen", fields: [cuenta_origen_id], references: [cuenta_id])
+  cuenta_destino_id         Int       
+  cuentaDestino           Cuenta    @relation("TransferenciaCuentaDestino", fields: [cuenta_destino_id], references: [cuenta_id])
+  monto                   Float
+  estadoTransferencia     String    @default("PENDIENTE")
+  fechaTransferencia      DateTime?
+  fechaAutorizacion       DateTime?
+  usuarioAutorizacionId   Int       
+  usuarioAutorizacion     Usuario  @relation(fields: [usuarioAutorizacionId], references: [usuarioId])
+  descripcion             String?
 }
 
-model Usuario {
-  usuario_id                 Int        @id @default(autoincrement())
-  nombre_usuario             String     @unique
-  contrasena                 String
-  rol_id                     Int
-  email                      String
-  telefono                   String
-  fecha_ultimo_inicio_sesion DateTime
-  estado_usuario             String
-  fecha_creacion             DateTime   @default(now())
-  transferencias             Transferencia[] // Relación uno a muchos con Transferencia
-  rol                        RolUsuario @relation(fields: [rol_id], references: [rol_id])
-  auditorias                 Auditoria[]   // Relación uno a muchos con Auditoria
-  cliente                    Cliente?
-}
-
-model RolUsuario {
-  rol_id        Int       @id @default(autoincrement())
-  descripcion   String
-  usuarios      Usuario[]
+model AccesoBancaVirtual {
+  id          Int       @id @default(autoincrement())
+  clienteId   Int       @unique
+  cliente     Cliente   @relation(fields: [clienteId], references: [id])
+  fechaAcceso DateTime
+  tipoAcceso  String
+  exitoso     Boolean
 }
 
 model Auditoria {
-  auditoria_id       Int      @id @default(autoincrement())
-  usuario_id         Int
-  accion             String
-  tabla_afectada     String
-  registro_afectado  String
-  fecha_accion       DateTime
-  ip_origen          String
-  detalles           String
-  descripcion        String
-  usuario            Usuario  @relation(fields: [usuario_id], references: [usuario_id])
-}
-
-model Tarjeta {
-  tarjeta_id      Int       @id @default(autoincrement())
-  cuenta_id      Int
-  numero_tarjeta  String    @unique
-  tipo_tarjeta    String
-  fecha_expiracion DateTime
-  cuenta          Cuenta    @relation(fields: [cuenta_id], references: [cuenta_id])
+  id                Int       @id @default(autoincrement())
+  usuarioId         Int       @unique
+  usuario           Usuario   @relation(fields: [usuarioId], references: [usuarioId])
+  accion            String
+  tablaAfectada     String
+  registroAfectado  String?
+  fechaAccion      DateTime
+  ipOrigen         String
+  detalles         String?
+  descripcion       String
 }

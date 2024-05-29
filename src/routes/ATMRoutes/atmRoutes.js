@@ -5,6 +5,60 @@ const AuthMiddleware = require('../authMiddleware');
 const prisma = new PrismaClient();
 const router = express.Router();
 
+router.post('verify_card', async (req, res) => {
+    const { card_number } = req.body;
+
+    try {
+        const card = prisma.card.findUnique({
+            where: { card_number: card_number },
+            include: {
+                account: {
+                    include: {
+                        customer: true
+                    }
+                }
+            }
+        });
+
+        if(!card) {
+            res.status(404).json({
+                statusCode: 404,
+                message: 'Tarjeta no encontrada.'
+            });
+        }
+
+        const token = jwt.sign(
+            {
+              clienteId: card.account.customer.customer_id,
+              tarjetaId: card.card_id,
+              cuentaId: card.account.account_id,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+        );
+
+        res.status(200).json({
+            statusCode: 200,
+            message: 'Tarjeta verificada exitosamente.',
+            data: {
+              customer: card.account.customer,
+              account: {
+                account_id: card.account.account_id,
+                account_number: card.account.account_number,
+                account_balance: card.account.balance,
+              },
+              token,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            error: error.message,
+        });
+    }
+});
+
 router.get('/get_balance', AuthMiddleware.tokenVerification, async (req, res) => {
     const { account_id } = req.query;
 

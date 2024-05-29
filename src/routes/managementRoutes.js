@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-router.post('/insert-account-type', AuthMiddleware.tokenVerification, async (req, res) => {
+router.post('/insert-account-type', async (req, res) => {
     const { description } = req.body;
   
     try {

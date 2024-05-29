@@ -52,7 +52,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: '5m' } // SE LE ESTABLECE UN TIEMPO DE VIDA
     );
 
-    res.json({ token });  //SE IMPRIME EL TOKEN
+    res.status(200).json({ 
+      statusCode: 200,
+      message: 'Inicio de sesión exitoso.',
+      data: {
+        token: token
+      }
+    });  //SE IMPRIME EL TOKEN
   } catch (error) {
     res.status(500).json({
       statusCode: 500,

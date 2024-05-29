@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const roleRoutes = require('./src/routes/roleRoutes');
 const userRoutes = require('./src/routes/userRoutes');
@@ -10,6 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const Database = process.env.DATABASE_URL;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {

@@ -20,6 +20,7 @@ router.post('/login', async (req, res) => {
         ]
       }
     });
+    console.log(user)
 
     if (!user) { //SI EL USUARIO NO SE ENCUENTRA
       return res.status(401).json({
@@ -36,6 +37,7 @@ router.post('/login', async (req, res) => {
     }
     //SE COMPARAN LAS CONTRASEÑAS ENCRIPTADAS
     const validPassword = await bcrypt.compare(password, user.password);
+    console.log(validPassword, password, user.password)
     //SI LA CONTRASEÑA NO COINCIDE
     if (!validPassword) {
       return res.status(401).json({

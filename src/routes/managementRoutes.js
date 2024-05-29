@@ -5,6 +5,31 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 const router = express.Router();
 
+router.post('/insert-account-type', AuthMiddleware.tokenVerification, async (req, res) => {
+    const { description } = req.body;
+  
+    try {
+      const newTypeAccount = await prisma.accountType.create({
+        data: {
+          description,
+        },
+      });
+  
+      res.status(201).json({
+        statusCode: 201,
+        message: 'Tipo de cuenta creado exitosamente',
+        data: newTypeAccount,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        statusCode: 500,
+        message: 'Error al crear el tipo de cuenta',
+        error: error.message,
+      });
+    }
+});
+
 router.post('/insert-account', async (req, res) => {
     const { customer_id, account_number, balance, account_type_id, account_status, credit_limit, opening_date } = req.body;
   

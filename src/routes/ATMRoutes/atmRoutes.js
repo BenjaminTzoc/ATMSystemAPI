@@ -5,7 +5,7 @@ const AuthMiddleware = require('../authMiddleware');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-router.post('verify_card', async (req, res) => {
+router.post('/verify_card', async (req, res) => {
     const { card_number } = req.body;
 
     try {

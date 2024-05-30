@@ -33,23 +33,11 @@ router.post('/verify_card', async (req, res) => {
             });
         }
 
-        function obfuscateCardNumber(cardNumber) {
-            const parts = cardNumber.split(' ');
-            if (parts.length !== 4) {
-                throw new Error('Formato de número de tarjeta inválido');
-            }
-            parts[1] = '***';
-            parts[2] = '***';
-            return parts.join(' ');
-        }
-
-        const obfuscatedCardNumber = obfuscateCardNumber(card.card_number);
-
         res.status(200).json({
             statusCode: 200,
             message: 'Tarjeta verificada exitosamente.',
             data: {
-              card_number: obfuscatedCardNumber,
+              card_number: card.card_number,
               user_name: card.account.customer.user.user_name,
               expiration_date: card.expiration_date,
             },

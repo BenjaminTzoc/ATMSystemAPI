@@ -10,12 +10,12 @@ router.post('/verify_card', async (req, res) => {
     const { card_number } = req.body;
 
     try {
-        const card = prisma.card.findUnique({
+        const card = await prisma.card.findUnique({
             where: { card_number: card_number },
             include: {
                 account: {
                     include: {
-                        customer: true
+                        customer: true,
                     }
                 }
             }
@@ -64,10 +64,11 @@ router.get('/get_balance', AuthMiddleware.tokenVerification, async (req, res) =>
     const { account_id } = req.query;
 
     try {
-        const account = prisma.account.findUnique({
+        const account = await prisma.account.findUnique({
             where: { account_id: parseInt(account_id) },
             select: { balance: true }
         });
+
         //SI NINGUNA CUENTA COINCIDE, DEVUELVE ERROR
         if(!account) {
             return res.status(404).json({

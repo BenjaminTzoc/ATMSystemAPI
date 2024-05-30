@@ -22,8 +22,8 @@ router.post('/verify_card', async (req, res) => {
         });
 
         if(!card) {
-            res.status(404).json({
-                statusCode: 404,
+            return res.status(401).json({
+                statusCode: 401,
                 message: 'Tarjeta no encontrada.'
             });
         }

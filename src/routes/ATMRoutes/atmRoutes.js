@@ -15,7 +15,11 @@ router.post('/verify_card', async (req, res) => {
             include: {
                 account: {
                     include: {
-                        customer: true,
+                        customer: {
+                            include: {
+                                user: true
+                            }
+                        }
                     }
                 }
             }
@@ -28,27 +32,25 @@ router.post('/verify_card', async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
-            {
-              clienteId: card.account.customer.customer_id,
-              tarjetaId: card.card_id,
-              cuentaId: card.account.account_id,
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '5m' }
-        );
+        function obfuscateCardNumber(cardNumber) {
+            const parts = cardNumber.split(' ');
+            if (parts.length !== 4) {
+                throw new Error('Formato de número de tarjeta inválido');
+            }
+            parts[1] = '***';
+            parts[2] = '***';
+            return parts.join(' ');
+        }
+
+        const obfuscatedCardNumber = obfuscateCardNumber(card.card_number);
 
         res.status(200).json({
             statusCode: 200,
             message: 'Tarjeta verificada exitosamente.',
             data: {
-              customer: card.account.customer,
-              account: {
-                account_id: card.account.account_id,
-                account_number: card.account.account_number,
-                account_balance: card.account.balance,
-              },
-              token,
+              card_number: obfuscateCardNumber,
+              user_name: card.account.customer.user.user_name,
+              expiration_date: card.expiration_date,
             },
         });
     } catch (error) {

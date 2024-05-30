@@ -65,7 +65,7 @@ router.post('/insert-card', async (req, res) => {
   
     try {
     const hashedPin = await bcrypt.hash(card_pin, 10);
-      const nuevaTarjeta = await prismaClient.tarjeta.create({
+      const new_card = await prisma.card.create({
         data: {
           account_id,
           card_number,
@@ -79,10 +79,9 @@ router.post('/insert-card', async (req, res) => {
       res.status(201).json({
         statusCode: 201,
         message: 'Tarjeta creada exitosamente',
-        data: nuevaTarjeta,
+        data: new_card,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({
         statusCode: 500,
         message: 'Error al crear la tarjeta',

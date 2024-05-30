@@ -48,7 +48,7 @@ router.post('/verify_card', async (req, res) => {
             statusCode: 200,
             message: 'Tarjeta verificada exitosamente.',
             data: {
-              card_number: obfuscateCardNumber,
+              card_number: obfuscatedCardNumber,
               user_name: card.account.customer.user.user_name,
               expiration_date: card.expiration_date,
             },

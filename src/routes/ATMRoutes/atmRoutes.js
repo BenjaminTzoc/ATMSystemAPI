@@ -96,6 +96,74 @@ router.post('/verify_pin', async (req, res) => {
     }
 });
 
+router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) => {
+    const { user_id } = req;
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { user_id: user_id },
+            include: {
+                customer: {
+                    include: {
+                        accounts: {
+                            include: {
+                                cards: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if(!user || !user.customer) {
+            return res.status(404).json({
+                statusCode: 404,
+                message: 'Cliente no encontrado.'
+            });
+        }
+
+        const customerData = {
+            user_name: user.user_name,
+            email: user.email,
+            customer: {
+                name: user.customer.name,
+                address: user.customer.address,
+                telephone: user.customer.telephone,
+                email: user.customer.email,
+                identification: user.customer.identification,
+                birthdate: user.customer.birthdate,
+                civil_status: user.customer.civil_status,
+                gender: user.customer.gender,
+                nationality: user.customer.accounts[0].ca,
+            },
+            account: user.customer.accounts.map(account => ({
+                account_id: account.account_id,
+                account_number: account.account_number,
+                balance: account.balance,
+                cards: account.cards.map(card => ({
+                    card_id: card.card_id,
+                    card_number: card.card_number,
+                    card_type: card.card_type,
+                    expiration_date: card.expiration_date,
+                    card_status: card.card_status
+                }))
+            }))
+        };
+
+        res.status(200).json({
+            statusCode: 200,
+            message: 'Datos del cliente obtenidos exitosamente.',
+            data: customerData
+        });
+    } catch (error) {
+        res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            error: error.message,
+        });
+    }
+});
+
 router.get('/get_balance', AuthMiddleware.tokenVerification, async (req, res) => {
     const { account_id } = req.query;
 

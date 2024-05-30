@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const AuthMiddleware = require('../authMiddleware');
 
 const prisma = new PrismaClient();
@@ -52,6 +53,51 @@ router.post('/verify_card', async (req, res) => {
               user_name: card.account.customer.user.user_name,
               expiration_date: card.expiration_date,
             },
+        });
+    } catch (error) {
+        res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            error: error.message,
+        });
+    }
+});
+
+router.post('/verify_pin', async (req, res) => {
+    const { card_number, pin } = req.body;
+
+    try {
+        const card = await prisma.card.findUnique({
+            where: { card_number: card_number }
+        });
+
+        if(!card) {
+            return res.status(401).json({
+                statusCode: 401,
+                message: 'Tarjeta no encontrada.'
+            });
+        }
+
+        const isPinValid = await bcrypt.compare(pin, card.card_pin);
+        if(!isPinValid){
+            return res.status(401).json({
+                statusCode: 401,
+                message: 'PIN incorrecto.'
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                card_id: card.card_id
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+        );
+
+        res.status(200).json({
+            statusCode: 200,
+            message: 'Tarjeta y PIN verificados exitosamente.',
+            data: { token }
         });
     } catch (error) {
         res.status(500).json({

@@ -97,9 +97,9 @@ router.post('/verify_pin', async (req, res) => {
 });
 
 router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) => {
-    const { user_id } = req;
-
     try {
+        const user_id = req.user_id;
+        
         const user = await prisma.user.findUnique({
             where: { user_id: user_id },
             include: {

@@ -69,7 +69,7 @@ router.post('/insert-card', async (req, res) => {
         data: {
           account_id,
           card_number,
-          card_type,
+          card_type,  
           expiration_date,
           card_status,
           card_pin: hashedPin,
@@ -89,5 +89,32 @@ router.post('/insert-card', async (req, res) => {
       });
     }
   });
+
+router.post('/insert_type_service', async (req, res) => {
+  try {
+    const { description } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+
+    const newServiceType = await prisma.serviceType.create({
+      data: {
+        description: description
+      }
+    });
+
+    res.status(201).json({
+      statusCode: 200,
+      service_type: newServiceType
+    });
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: 'Error al crear la cuenta',
+      error: error.message,
+    });
+  }
+})
 
 module.exports = router;

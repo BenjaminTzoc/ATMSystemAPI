@@ -56,7 +56,18 @@ router.post('/verify_pin', async (req, res) => {
 
     try {
         const card = await prisma.card.findUnique({
-            where: { card_number: card_number }
+            where: { card_number: card_number },
+            include: {
+                account: {
+                    include: {
+                        customer: {
+                            include: {
+                                user: true
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         if(!card) {
@@ -76,7 +87,10 @@ router.post('/verify_pin', async (req, res) => {
 
         const token = jwt.sign(
             {
-                card_id: card.card_id
+                customerId: card.account.customer.id,
+                cardId: card.id,
+                accountId: card.account.account_id,
+                userId: card.account.customer.user.usuarioId
             },
             process.env.JWT_SECRET,
             { expiresIn: '5m' }
@@ -99,7 +113,7 @@ router.post('/verify_pin', async (req, res) => {
 router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) => {
     try {
         const user_id = req.user_id;
-        
+
         const user = await prisma.user.findUnique({
             where: { user_id: user_id },
             include: {

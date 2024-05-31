@@ -383,7 +383,7 @@ router.post('/pay_service', async (req, res) => {
     }
 });
 
-router.post('check_balance_service', async (req, res) => {
+router.post('/check_balance_service', async (req, res) => {
     try {
         const { customer_id, service_type_id } = req.body;
 

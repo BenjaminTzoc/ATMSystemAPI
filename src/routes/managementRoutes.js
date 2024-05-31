@@ -111,10 +111,50 @@ router.post('/insert_type_service', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       statusCode: 500,
-      message: 'Error al crear la cuenta',
+      message: 'Error al crear el tipo de servicio.',
       error: error.message,
     });
   }
-})
+});
+
+router.post('/assign_service', async (req, res) => {
+  try {
+    const { customer_id, service_type_id } = req.body;
+
+    if (!customer_id || !service_type_id) {
+      return res.status(400).json({ error: 'Customer ID and Service Type ID are required' });
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { customer_id: customer_id }
+    });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const serviceType = await prisma.serviceType.findUnique({
+      where: { service_type_id: service_type_id }
+    });
+    if (!serviceType) {
+      return res.status(404).json({ error: 'Service Type not found' });
+    }
+
+    const serviceBalance = await prisma.serviceBalance.create({
+      data: {
+        customer_id: customer_id,
+        service_type_id: service_type_id,
+        updated_date: new Date()
+      }
+    });
+
+    res.status(201).json(serviceBalance);
+  } catch (error) {
+    res.status(500).json({
+      statusCode: 500,
+      message: 'Error al asignar servicio.',
+      error: error.message,
+    });
+  }
+});
 
 module.exports = router;

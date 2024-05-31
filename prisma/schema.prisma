@@ -85,8 +85,8 @@ model Card {
 model ServiceBalance {
   service_balance_id                Int           @id @default(autoincrement())
   customer_id                       Int
-  customer                          Customer      @relation(fields: [customer_id], references: [customer_id])
   service_type_id                   Int           @unique
+  customer                          Customer      @relation(fields: [customer_id], references: [customer_id])
   service_type                      ServiceType   @relation(fields: [service_type_id], references: [service_type_id])
   balance                           Float         @default(0)
   updated_date                      DateTime      @default(now())

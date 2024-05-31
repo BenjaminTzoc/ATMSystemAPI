@@ -315,103 +315,73 @@ router.post('/transfer', AuthMiddleware.tokenVerification, async (req, res) => {
     }
 });
 
-router.post('/pay_service', AuthMiddleware.tokenVerification, async (req, res) => {
-    const { card_number, pin, service_type_id, amount, reference } = req.body;
-    const { user_id } = req;
-
+router.post('/pay_service', async (req, res) => {
     try {
-        // Obtener la tarjeta y verificar que exista y que el pin sea correcto
-        const card = await prisma.card.findUnique({
-            where: { card_number },
-            include: {
-                account: true
-            }
-        });
+        const { account_id, service_type_id, amount, reference } = req.body;
 
-        if (!card) {
-            return res.status(404).json({
-                statusCode: 404,
-                message: 'Tarjeta no encontrada.'
-            });
+        if (!accountId || !serviceTypeId || !amount) {
+            return res.status(400).json({ error: 'Account ID, Service Type ID, and Amount are required' });
         }
 
-        // Verificar el pin
-        const validPin = await bcrypt.compare(pin, card.card_pin);
-        if (!validPin) {
-            return res.status(401).json({
-                statusCode: 401,
-                message: 'PIN incorrecto.'
-            });
+        const account = await prisma.account.findUnique({
+            where: { account_id: account_id },
+            include: { customer: true }
+          });
+          if (!account) {
+            return res.status(404).json({ error: 'Cuenta no encontrada.' });
         }
 
-        // Verificar que el saldo de la cuenta sea suficiente
-        const account = card.account;
+        const serviceType = await prisma.serviceType.findUnique({
+            where: { service_type_id: service_type_id }
+          });
+          if (!serviceType) {
+            return res.status(404).json({ error: 'Tipo de servicio no encontrado.' });
+        }
+
         if (account.balance < amount) {
-            return res.status(400).json({
-                statusCode: 400,
-                message: 'Saldo insuficiente.'
-            });
+            return res.status(400).json({ error: 'Saldo insuficiente.' });
         }
 
-        // Actualizar el saldo del servicio
-        const serviceBalance = await prisma.serviceBalance.findFirst({
-            where: {
-                customer_id: account.customer_id,
-                service_type_id: service_type_id
-            }
-        });
-
-        if (!serviceBalance) {
-            return res.status(404).json({
-                statusCode: 404,
-                message: 'Saldo del servicio no encontrado.'
-            });
-        }
-
-        const updatedServiceBalance = await prisma.serviceBalance.update({
-            where: {
-                service_balance_id: serviceBalance.service_balance_id
-            },
-            data: {
-                balance: serviceBalance.balance + amount,
-                updated_date: new Date()
-            }
-        });
-
-        // Registrar el pago en la tabla PaymentService
-        const newPayment = await prisma.paymentService.create({
-            data: {
-                account_id: account.account_id,
-                service_type_id: service_type_id,
-                amount: amount,
-                reference: reference,
-                status: 'COMPLETADO',
-                payment_date: new Date(),
-                service_balance_id: updatedServiceBalance.service_balance_id
-            }
-        });
-
-        // Actualizar el saldo de la cuenta
         const updatedAccount = await prisma.account.update({
-            where: { account_id: account.account_id },
+            where: { account_id: account_id },
+            data: { balance: account.balance - amount }
+        });
+
+        const serviceBalance = await prisma.serviceBalance.findUnique({
+            where: { customer_id_service_type_id: { customer_id: account.customer.customer_id, service_type_id: service_type_id } }
+          });
+          if (!serviceBalance) {
+            return res.status(404).json({ error: 'Servicio no encontrado.' });
+        }
+        const updatedServiceBalance = await prisma.serviceBalance.update({
+            where: { service_balance_id: serviceBalance.service_balance_id },
+            data: { balance: serviceBalance.balance + amount, updated_date: new Date() }
+        });
+
+        const paymentService = await prisma.paymentService.create({
             data: {
-                balance: account.balance - amount
+              account_id: account_id,
+              service_type_id: service_type_id,
+              amount: amount,
+              reference: reference,
+              status: 'P',
+              payment_date: new Date(),
+              service_balance_id: updatedServiceBalance.service_balance_id
             }
         });
 
-        res.status(200).json({
-            statusCode: 200,
-            message: 'Pago realizado exitosamente.',
-            data: {
-                newPayment,
-                updatedAccount
-            }
+        res.status(201).json({
+            updatedAccount,
+            serviceType,
+            updatedAccount,
+            updatedServiceBalance,
+            paymentService
         });
     } catch (error) {
         res.status(500).json({
             statusCode: 500,
             message: 'Error del servidor',
-            error: error.message,
+            data: { error: error.message }
         });
     }
 });

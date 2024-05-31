@@ -44,6 +44,7 @@ model Customer {
   accounts                Account[]
   user                    User?                   @relation(fields: [user_id], references: [user_id])
   user_id                 Int?                    @unique
+  services                ServiceBalance[]
 }
 
 model AccountType {
@@ -81,10 +82,22 @@ model Card {
   card_pin                String
 }
 
+model ServiceBalance {
+  service_balance_id                Int           @id @default(autoincrement())
+  customer_id                       Int
+  customer                          Customer      @relation(fields: [customer_id], references: [customer_id])
+  service_type_id                   Int           @unique
+  service_type                      ServiceType   @relation(fields: [service_type_id], references: [service_type_id])
+  balance                           Float         @default(0)
+  updated_date                      DateTime      @default(now())
+  services_payments                 PaymentService[]
+}
+
 model ServiceType {
   service_type_id       Int               @id @default(autoincrement())
   description           String
   paymentsServices      PaymentService[]
+  services              ServiceBalance[]
 }
 
 model PaymentService {
@@ -97,6 +110,8 @@ model PaymentService {
   reference                 String?
   status                    String            @default("P")
   payment_date              DateTime
+  service_balance_id        Int
+  service_balance           ServiceBalance    @relation(fields: [service_balance_id], references: [service_balance_id])
 }
 
 model Transfer {

@@ -319,7 +319,7 @@ router.post('/pay_service', async (req, res) => {
     try {
         const { account_id, service_type_id, amount, reference } = req.body;
 
-        if (!accountId || !serviceTypeId || !amount) {
+        if (!account_id || !service_type_id || !amount) {
             return res.status(400).json({ error: 'Account ID, Service Type ID, and Amount are required' });
         }
 

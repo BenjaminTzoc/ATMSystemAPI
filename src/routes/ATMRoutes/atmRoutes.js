@@ -87,10 +87,10 @@ router.post('/verify_pin', async (req, res) => {
 
         const token = jwt.sign(
             {
-                customerId: card.account.customer.id,
-                cardId: card.id,
+                customerId: card.account.customer.customer_id,
+                cardId: card.card_id,
                 accountId: card.account.account_id,
-                userId: card.account.customer.user.usuarioId
+                userId: card.account.customer.user.user_id
             },
             process.env.JWT_SECRET,
             { expiresIn: '5m' }

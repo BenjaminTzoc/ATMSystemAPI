@@ -383,4 +383,51 @@ router.post('/pay_service', async (req, res) => {
     }
 });
 
+router.post('check_balance_service', async (req, res) => {
+    try {
+        const { customer_id, service_type_id } = req.body;
+
+        if (!customer_id || !service_type_id) {
+            return res.status(400).json({ error: 'Customer ID and Service Type ID are required' });
+        }
+
+        const customer = await prisma.customer.findUnique({
+            where: { customer_id: customer_id }
+        });
+        if (!customer) {
+            return res.status(404).json({ error: 'Cliente no encontrado.' });
+        }
+
+        const serviceType = await prisma.serviceType.findUnique({
+            where: { service_type_id: service_type_id }
+        });
+        if (!serviceType) {
+            return res.status(404).json({ error: 'Tipo de servicio no encontrado.' });
+        }
+
+        const serviceBalance = await prisma.serviceBalance.findFirst({
+            where: {
+                customer_id: customer_id,
+                service_type_id: service_type_id
+            }
+        });
+
+        if (!serviceBalance) {
+            return res.status(404).json({ error: 'Servicio no afiliado.' });
+        }
+
+        res.status(200).json({
+            customer_id: customer_id,
+            service_type_id: service_type_id,
+            service_info: serviceBalance
+        });
+    } catch(error) {
+        res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            data: { error: error.message }
+        });
+    }
+});
+
 module.exports = router;

@@ -347,16 +347,16 @@ router.post('/pay_service', async (req, res) => {
             data: { balance: account.balance - amount }
         });
 
-        // const serviceBalance = await prisma.serviceBalance.findUnique({
-        //     where: { customer_id_service_type_id: { customer_id: account.customer.customer_id, service_type_id: service_type_id } }
-        //   });
-        //   if (!serviceBalance) {
-        //     return res.status(404).json({ error: 'Servicio no encontrado.' });
-        // }
-        // const updatedServiceBalance = await prisma.serviceBalance.update({
-        //     where: { service_balance_id: serviceBalance.service_balance_id },
-        //     data: { balance: serviceBalance.balance + amount, updated_date: new Date() }
-        // });
+        const serviceBalance = await prisma.serviceBalance.findUnique({
+            where: { customer_id_service_type_id: { customer_id: account.customer.customer_id, service_type_id: service_type_id } }
+          });
+          if (!serviceBalance) {
+            return res.status(404).json({ error: 'Servicio no encontrado.' });
+        }
+        const updatedServiceBalance = await prisma.serviceBalance.update({
+            where: { service_balance_id: serviceBalance.service_balance_id },
+            data: { balance: serviceBalance.balance + amount, updated_date: new Date() }
+        });
 
         const paymentService = await prisma.paymentService.create({
             data: {
@@ -366,7 +366,7 @@ router.post('/pay_service', async (req, res) => {
               reference: reference,
               status: 'P',
               payment_date: new Date(),
-            //   service_balance_id: updatedServiceBalance.service_balance_id
+              service_balance_id: updatedServiceBalance.service_balance_id
             }
         });
 

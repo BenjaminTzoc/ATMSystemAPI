@@ -355,24 +355,26 @@ router.post('/transfer', AuthMiddleware.tokenVerification, async (req, res) => {
 
 router.post('/pay_service', async (req, res) => {
     try {
-        const { account_id, service_type_id, amount, reference } = req.body;
+        const { account_number, service_type_id, amount, reference } = req.body;
 
-        if (!account_id || !service_type_id || !amount) {
-            return res.status(400).json({ error: 'Account ID, Service Type ID, and Amount are required' });
+        if (!account_number || !service_type_id || !amount) {
+            return res.status(400).json({ error: 'Account Number, Service Type ID, and Amount are required' });
         }
 
         const account = await prisma.account.findUnique({
-            where: { account_id: account_id },
+            where: { account_number: account_number },
             include: { customer: true }
-          });
-          if (!account) {
+        });
+
+        if (!account) {
             return res.status(404).json({ error: 'Cuenta no encontrada.' });
         }
 
         const serviceType = await prisma.serviceType.findUnique({
             where: { service_type_id: service_type_id }
-          });
-          if (!serviceType) {
+        });
+
+        if (!serviceType) {
             return res.status(404).json({ error: 'Tipo de servicio no encontrado.' });
         }
 
@@ -381,16 +383,18 @@ router.post('/pay_service', async (req, res) => {
         }
 
         const updatedAccount = await prisma.account.update({
-            where: { account_id: account_id },
+            where: { account_id: account.account_id },
             data: { balance: account.balance - amount }
         });
 
         const serviceBalance = await prisma.serviceBalance.findFirst({
             where: { customer_id: account.customer.customer_id, service_type_id: service_type_id }
-          });
-          if (!serviceBalance) {
+        });
+
+        if (!serviceBalance) {
             return res.status(404).json({ error: 'Servicio no encontrado.' });
         }
+
         const updatedServiceBalance = await prisma.serviceBalance.update({
             where: { service_balance_id: serviceBalance.service_balance_id },
             data: { balance: serviceBalance.balance + amount, updated_date: new Date() }
@@ -398,13 +402,13 @@ router.post('/pay_service', async (req, res) => {
 
         const paymentService = await prisma.paymentService.create({
             data: {
-              account_id: account_id,
-              service_type_id: service_type_id,
-              amount: amount,
-              reference: reference,
-              status: 'P',
-              payment_date: new Date(),
-              service_balance_id: updatedServiceBalance.service_balance_id
+                account_id: account.account_id,
+                service_type_id: service_type_id,
+                amount: amount,
+                reference: reference,
+                status: 'P',
+                payment_date: new Date(),
+                service_balance_id: updatedServiceBalance.service_balance_id
             }
         });
 

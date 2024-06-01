@@ -320,25 +320,23 @@ router.post('/transfer', async (req, res) => {
             });
         }
 
-        await prisma.$transaction([
-            prisma.account.update({
-                where: { account_id: parseInt(origin_account_id) },
-                data: { balance: parseFloat(origin_account.balance) }
-            }),
-            prisma.account.update({
-                where: { account_id: parseInt(destination_account_id) },
-                data: { balance: parseFloat(destination_account.balance) }
-            }),
-            prisma.transfer.create({
-                data: {
-                    account_origin_id: parseInt(origin_account_id),
-                    account_destination_id: parseInt(destination_account_id),
-                    amount: parseFloat(amount),
-                    transfer_status: 'S',
-                    transfer_date: new Date()
-                }
-            })
-        ]);
+        prisma.account.update({
+            where: { account_id: parseInt(origin_account_id) },
+            data: { balance: parseFloat(origin_account.balance) - amount }
+        }),
+        prisma.account.update({
+            where: { account_id: parseInt(destination_account_id) },
+            data: { balance: parseFloat(destination_account.balance) + amount }
+        }),
+        prisma.transfer.create({
+            data: {
+                account_origin_id: parseInt(origin_account_id),
+                account_destination_id: parseInt(destination_account_id),
+                amount: parseFloat(amount),
+                transfer_status: 'S',
+                transfer_date: new Date()
+            }
+        })
 
         res.status(200).json({
             statusCode: 200,

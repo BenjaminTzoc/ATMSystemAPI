@@ -476,7 +476,6 @@ router.post('/consume_service', async (req, res) => {
         res.status(201).json({
             message: 'Saldo debitado exitosamente.',
             updatedServiceBalance,
-            paymentService
         });
     } catch (error) {
         return res.status(500).json({

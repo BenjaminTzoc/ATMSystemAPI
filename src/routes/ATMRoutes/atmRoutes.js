@@ -450,7 +450,10 @@ router.post('/consume_service', async (req, res) => {
         });
 
         if (!card) {
-            return res.status(404).json({ error: 'Tarjeta no encontrada.' });
+            return res.status(404).json({ 
+                statusCode: 404,
+                error: 'Tarjeta no encontrada.' 
+            });
         }
 
         const serviceBalance = await prisma.serviceBalance.findFirst({
@@ -461,11 +464,17 @@ router.post('/consume_service', async (req, res) => {
         });
 
         if (!serviceBalance) {
-            return res.status(404).json({ error: 'Balance del servicio no encontrado.' });
+            return res.status(404).json({ 
+                statusCode: 404,
+                error: 'Balance del servicio no encontrado.'
+            });
         }
 
         if (serviceBalance.balance < amount) {
-            return res.status(400).json({ error: 'Saldo insuficiente.' });
+            return res.status(400).json({ 
+                statusCode: 400,
+                error: 'Saldo insuficiente.' 
+            });
         }
 
         const updatedServiceBalance = await prisma.serviceBalance.update({
@@ -474,6 +483,7 @@ router.post('/consume_service', async (req, res) => {
         });
 
         res.status(201).json({
+            statusCode: 200,
             message: 'Saldo debitado exitosamente.',
             updatedServiceBalance,
         });

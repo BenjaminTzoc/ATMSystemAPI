@@ -178,6 +178,44 @@ router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) 
     }
 });
 
+router.get('get_account_card', async (req, res) => {
+    try {
+        const { card_number } = req.query;
+
+        if (!card_number) {
+            return res.status(400).json({ error: 'Card number is required' });
+        }
+
+        const card = await prisma.card.findUnique({
+            where: { card_number: card_number },
+            include: { account: true },
+        });
+
+        if (!card) {
+            return res.status(404).json({
+                statusCode: 404,
+                message: 'Tarjeta no encontrada.'
+            });
+        }
+
+        res.status(200).json({
+            statusCode: 200,
+            message: 'Tarjeta encontrada.',
+            card: {
+                card_number: card.card_number,
+                card_type: card.card_type,
+                expiration_date: card.expiration_date,
+                card_status: card.card_status,
+            },
+            account: card.account,
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            statusCode: 500,    
+            error: 'Server error', details: error.message });
+    }   
+});
+
 router.get('/get_balance', AuthMiddleware.tokenVerification, async (req, res) => {
     const { account_id } = req.query;
 

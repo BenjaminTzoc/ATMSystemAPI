@@ -297,13 +297,13 @@ router.post('/transfer', async (req, res) => {
             where: { account_id: parseInt(origin_account_id) },
             select: { balance: true }
         });
-        if(!origin_account) {
+        if (!origin_account) {
             return res.status(404).json({
                 statusCode: 404,
                 message: 'Cuenta de origen no encontrada.'
             });
         }
-        if(origin_account.balance < amount) {
+        if (origin_account.balance < amount) {
             return res.status(400).json({
                 statusCode: 400,
                 message: 'Saldo insuficiente.'
@@ -313,7 +313,7 @@ router.post('/transfer', async (req, res) => {
             where: { account_id: parseInt(destination_account_id) },
             select: { balance: true }
         });
-        if(!destination_account) {
+        if (!destination_account) {
             return res.status(404).json({
                 statusCode: 404,
                 message: 'Cuenta de destino no encontrada.'
@@ -333,7 +333,7 @@ router.post('/transfer', async (req, res) => {
                 data: {
                     account_origin_id: parseInt(origin_account_id),
                     account_destination_id: parseInt(destination_account_id),
-                    amount,
+                    amount: parseFloat(amount),
                     transfer_status: 'S',
                     transfer_date: new Date()
                 }

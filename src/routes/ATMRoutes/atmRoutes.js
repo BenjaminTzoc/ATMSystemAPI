@@ -430,4 +430,61 @@ router.post('/check_balance_service', async (req, res) => {
     }
 });
 
+router.post('/consume_service', async (req, res) => {
+    try {
+        const { card_number, service_type_id, amount } = req.body;
+
+        if (!card_number || !service_type_id || !amount) {
+            return res.status(400).json({ error: 'Card number, Service Type ID, and Amount are required' });
+        }
+
+        const card = await prisma.card.findUnique({
+            where: { card_number: card_number },
+            include: {
+                account: {
+                    include: {
+                        customer: true
+                    }
+                }
+            }
+        });
+
+        if (!card) {
+            return res.status(404).json({ error: 'Tarjeta no encontrada.' });
+        }
+
+        const serviceBalance = await prisma.serviceBalance.findFirst({
+            where: {
+                customer_id: card.account.customer.customer_id,
+                service_type_id: service_type_id
+            }
+        });
+
+        if (!serviceBalance) {
+            return res.status(404).json({ error: 'Balance del servicio no encontrado.' });
+        }
+
+        if (serviceBalance.balance < amount) {
+            return res.status(400).json({ error: 'Saldo insuficiente.' });
+        }
+
+        const updatedServiceBalance = await prisma.serviceBalance.update({
+            where: { service_balance_id: serviceBalance.service_balance_id },
+            data: { balance: serviceBalance.balance - amount, updated_date: new Date() }
+        });
+
+        res.status(201).json({
+            message: 'Saldo debitado exitosamente.',
+            updatedServiceBalance,
+            paymentService
+        });
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            data: { error: error.message }
+        });
+    }
+});
+
 module.exports = router;

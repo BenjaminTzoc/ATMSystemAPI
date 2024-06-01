@@ -178,7 +178,7 @@ router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) 
     }
 });
 
-router.post('get_account_card', async (req, res) => {
+router.post('/get_account_card', async (req, res) => {
     try {
         const { card_number } = req.body;
 

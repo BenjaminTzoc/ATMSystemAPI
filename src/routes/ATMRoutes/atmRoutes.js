@@ -178,9 +178,9 @@ router.get('/get_user_data', AuthMiddleware.tokenVerification, async (req, res) 
     }
 });
 
-router.get('get_account_card', async (req, res) => {
+router.post('get_account_card', async (req, res) => {
     try {
-        const { card_number } = req.query;
+        const { card_number } = req.body;
 
         if (!card_number) {
             return res.status(400).json({ error: 'Card number is required' });

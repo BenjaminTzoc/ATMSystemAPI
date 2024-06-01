@@ -289,7 +289,7 @@ router.post('/withdraw', AuthMiddleware.tokenVerification, async (req, res) => {
     }
 });
 
-router.post('/transfer', AuthMiddleware.tokenVerification, async (req, res) => {
+router.post('/transfer', async (req, res) => {
     const { origin_account_id, destination_account_id, amount } = req.body;
 
     try {

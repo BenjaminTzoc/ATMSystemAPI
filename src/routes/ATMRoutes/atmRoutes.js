@@ -323,11 +323,11 @@ router.post('/transfer', async (req, res) => {
         await prisma.$transaction([
             prisma.account.update({
                 where: { account_id: parseInt(origin_account_id) },
-                data: { balance: parseFloat(origin_account.balance - amount )}
+                data: { balance: parseFloat(origin_account.balance) - amount }
             }),
             prisma.account.update({
                 where: { account_id: parseInt(destination_account_id) },
-                data: { balance: parseFloat(destination_account.balance + amount )}
+                data: { balance: parseFloat(destination_account.balance) + amount }
             }),
             prisma.transfer.create({
                 data: {

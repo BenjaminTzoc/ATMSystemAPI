@@ -413,6 +413,8 @@ router.post('/pay_service', async (req, res) => {
         });
 
         res.status(201).json({
+            statusCode: 200,
+            message: 'Pago realizado exitosamente.',
             paymentService,
             updatedAccount
         });

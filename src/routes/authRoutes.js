@@ -18,6 +18,9 @@ router.post('/login', async (req, res) => {
           { user_name },
           { email: user_name }
         ]
+      },
+      include: {
+        customer: true
       }
     });
     console.log(user)
@@ -47,9 +50,9 @@ router.post('/login', async (req, res) => {
     }
     //SE GENERA UN NUEVO TOKEN JWT
     const token = jwt.sign(
-      { user_id: user.user_id, user_name: user.user_name },
+      { user_id: user.user_id, user_name: user.user_name, customer_id: user.customer.customer_id },
       process.env.JWT_SECRET,
-      { expiresIn: '5m' } // SE LE ESTABLECE UN TIEMPO DE VIDA
+      { expiresIn: '30m' } // SE LE ESTABLECE UN TIEMPO DE VIDA
     );
 
     res.status(200).json({ 
@@ -109,9 +112,9 @@ router.post('/atm_login', async (req, res) => {
     }
     //GENERA NUEVO TOKEN DE INICIO DE SESION
     const token = jwt.sign(
-      { card_id: card.card_id, account_id: card.account_id },
+      { card_id: card.card_id, account_id: card.account_id, customer_id: card.account.customer.customer_id },
       process.env.JWT_SECRET,
-      { expiresIn: '5m' }
+      { expiresIn: '30m' }
     );
 
     res.json({

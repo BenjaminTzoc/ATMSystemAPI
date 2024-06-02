@@ -55,7 +55,7 @@ model AccountType {
 
 model Account {
   account_id                  Int                 @id @default(autoincrement())
-  customer_id                 Int                 @unique
+  customer_id                 Int
   customer                    Customer            @relation(fields: [customer_id], references: [customer_id])
   account_number              String              @unique
   balance                     Float
@@ -73,11 +73,11 @@ model Account {
 
 model Card {
   card_id                 Int           @id @default(autoincrement())
-  account_id              Int           @unique
+  account_id              Int
   account                 Account       @relation(fields: [account_id], references: [account_id])
   card_number             String        @unique
   card_type               String
-  expiration_date         DateTime
+  expiration_date         String
   card_status             String
   card_pin                String
 }

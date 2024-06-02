@@ -15,6 +15,8 @@ class AuthMiddleware {
       
       // Agrega el ID del usuario al objeto de solicitud (req) para que esté disponible en el siguiente middleware o en el controlador
       req.user_id = decoded.user_id;
+      req.customer_id = decoded.customer_id;
+      req.account_id = decoded.account_id;
       next();
     });
   }

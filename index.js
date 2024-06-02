@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
-const roleRoutes = require('./src/routes/roleRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const homeRoutes = require('./src/routes/virtualBankRoutes/homeRoutes');
@@ -23,7 +22,6 @@ app.get('/', (req, res) => {
 
 app.use('/management', managementRoutes);
 
-app.use('/roles', roleRoutes);
 app.use('/user', userRoutes);
 app.use('/auth', authRoutes);
 app.use('/home', homeRoutes);

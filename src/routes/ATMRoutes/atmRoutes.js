@@ -217,11 +217,11 @@ router.post('/get_account_card', async (req, res) => {
 });
 
 router.get('/get_balance', AuthMiddleware.tokenVerification, async (req, res) => {
-    const { account_id } = req.query;
+    const account_id = req.account_id;
 
     try {
         const account = await prisma.account.findUnique({
-            where: { account_id: parseInt(account_id) },
+            where: { account_id: account_id },
             select: { balance: true }
         });
 
@@ -269,7 +269,7 @@ router.post('/withdraw', AuthMiddleware.tokenVerification, async (req, res) => {
             });
         }
         const updated_account = await prisma.account.update({
-            where: { account_id: parseInt(account_id) },
+            where: { account_id: parseInt(account_id) }, 
             data: { balance: account.balance - amount }
         });
         res.status(200).json({
@@ -289,69 +289,75 @@ router.post('/withdraw', AuthMiddleware.tokenVerification, async (req, res) => {
     }
 });
 
-router.post('/transfer', async (req, res) => {
-    const { origin_account_id, destination_account_id, amount } = req.body;
+router.post('/transfer', async(req, res) => {
+    const { account_origin_id, account_destination_id, amount, authorization_user_id, description } = req.body;
 
-    try {
-        const origin_account = await prisma.account.findUnique({
-            where: { account_id: parseInt(origin_account_id) },
-            select: { balance: true }
-        });
-        if (!origin_account) {
-            return res.status(404).json({
-                statusCode: 404,
-                message: 'Cuenta de origen no encontrada.'
+    try{
+        const result = await prisma.$transaction(async (prisma) => {
+            const origin_account = await prisma.account.findUnique({
+               where: { account_id: account_origin_id } 
             });
-        }
-        if (origin_account.balance < amount) {
-            return res.status(400).json({
-                statusCode: 400,
-                message: 'Saldo insuficiente.'
-            });
-        }
-        const destination_account = await prisma.account.findUnique({
-            where: { account_id: parseInt(destination_account_id) },
-            select: { balance: true }
-        });
-        if (!destination_account) {
-            return res.status(404).json({
-                statusCode: 404,
-                message: 'Cuenta de destino no encontrada.'
-            });
-        }
 
-        prisma.account.update({
-            where: { account_id: parseInt(origin_account_id) },
-            data: { balance: parseFloat(origin_account.balance) - amount }
-        }),
-        prisma.account.update({
-            where: { account_id: parseInt(destination_account_id) },
-            data: { balance: parseFloat(destination_account.balance) + amount }
-        }),
-        prisma.transfer.create({
-            data: {
-                account_origin_id: parseInt(origin_account_id),
-                account_destination_id: parseInt(destination_account_id),
-                amount: parseFloat(amount),
-                transfer_status: 'S',
-                transfer_date: new Date()
+            const dest_account = await prisma.account.findUnique({
+                where: { account_id: account_destination_id }
+            });
+
+            if(!origin_account){
+                return res.status(404).json({
+                    statusCode: 404,
+                    message: 'Cuenta de origen no encontrada.'
+                });
             }
-        })
+            if(!dest_account){
+                return res.status(404).json({
+                    statusCode: 404,
+                    message: 'Cuenta de origen no encontrada.'
+                });
+            }
 
-        res.status(200).json({
-            statusCode: 200,
-            message: 'Transferencia exitosa.'
+            const accountOrigin = await prisma.account.update({
+                where: { account_id: account_origin_id },
+                data: { balance: { decrement: amount } }
+            });
+
+            const accountDest = await prisma.account.update({
+                where: { account_id: account_destination_id },
+                data: { balance: { increment: amount } }
+            });
+
+            const transfer = await prisma.transfer.create({
+                data: {
+                    account_origin_id: account_origin_id,
+                    account_destination_id: account_destination_id,
+                    amount: amount,
+                    transfer_status: 'P',
+                    authorization_user_id: authorization_user_id,
+                    description: description,
+                    transfer_date: new Date()
+                }
+            });
+
+            return res.status(200).json({
+                statusCode: 200,
+                message: 'Transferencia realizada exitosamente.',
+                data: { 
+                    transfer,
+                    accountOrigin,
+                    accountDest
+                }
+            });
         });
+
+        result;
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             statusCode: 500,
-            message: 'Error del servidor',
-            data: { error: error.message }
+            message: 'Error del servidor'
         });
     }
 });
 
-router.post('/pay_service', async (req, res) => {
+router.post('/pay_service', AuthMiddleware.tokenVerification, async (req, res) => {
     try {
         const { account_number, service_type_id, amount, reference } = req.body;
 
@@ -425,9 +431,10 @@ router.post('/pay_service', async (req, res) => {
     }
 });
 
-router.post('/check_balance_service', async (req, res) => {
+router.post('/check_balance_service', AuthMiddleware.tokenVerification, async (req, res) => {
+    const customer_id = req.customer_id;
     try {
-        const { customer_id, service_type_id } = req.body;
+        const { service_type_id } = req.body;
 
         if (!customer_id || !service_type_id) {
             return res.status(400).json({ error: 'Customer ID and Service Type ID are required' });
@@ -529,6 +536,60 @@ router.post('/consume_service', async (req, res) => {
             message: 'Saldo debitado exitosamente.',
             updatedServiceBalance,
         });
+    } catch (error) {
+        return res.status(500).json({
+            statusCode: 500,
+            message: 'Error del servidor',
+            data: { error: error.message }
+        });
+    }
+});
+
+router.get('/get_accounts', AuthMiddleware.tokenVerification, async (req, res) => {
+    const user_id = req.user_id
+
+    try {
+        const customer = await prisma.customer.findUnique({
+            where: { user_id: user_id },
+            include: {
+                accounts: {
+                    include: {
+                        account_type: true,
+                        cards: true
+                    }
+                }
+            }
+        });
+
+        if(!customer){
+            return res.status(404).json({
+                statusCode: 404,
+                message: 'Cliente no encontrado.'
+            });
+        }
+
+        const account = customer.accounts.map(account => ({
+            account_id: account.account_id,
+            account_number: account.account_number,
+            balance: account.balance,
+            account_type: account.account_type.description,
+            account_status: account.account_status,
+            credit_limit: account.credit_limit,
+            opening_date: account.opening_date,
+            closing_date: account.closing_date,
+            cards: account.cards.map(card => ({
+                cardNumber: card.card_number,
+                cardType: card.card_type,
+                expirationDate: card.expiration_date,
+                cardStatus: card.card_status,
+            })),
+        }));
+
+        res.status(200).json({
+            statusCode: 200,
+            message: 'Consulta de cuentas exitosa.',
+            data: { account }
+        })
     } catch (error) {
         return res.status(500).json({
             statusCode: 500,

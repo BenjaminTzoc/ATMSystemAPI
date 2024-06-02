@@ -18,3 +18,11 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+
+  grafana:
+    image: grafana/grafana-enterprise
+    restart: unless-stopped
+    ports:
+     - '3004:3000' 
+
+  
